@@ -1,0 +1,6 @@
+[discord]
+token = "YOUR_DISCORD_TOKEN"
+
+[logging]
+level = "debug"
+file = "site.out"
