@@ -1,5 +1,5 @@
 [discord]
-token = "YOUR_DISCORD_TOKEN"
+token = "YOUR_DISCORD_BOT_TOKEN"
 
 [logging]
 level = "debug"
