@@ -10,14 +10,17 @@ use log::error;
 use rand::{thread_rng, Rng};
 use std::iter;
 
-fn roll_dice(num_sides: &Vec<u32>) -> u32 {
-    let mut rng = thread_rng();
+#[derive(Copy, Clone)]
+struct Die(u32);
+impl Die {
+    fn roll<R: Rng>(self, rng: &mut R) -> u32 {
+        rng.gen_range(1, self.0 + 1)
+    }
+}
+fn roll_dice<D: iter::Iterator<Item = Die>>(dice: D) -> u32 {
+    let rng = &mut thread_rng();
 
-    num_sides
-        .iter()
-        .fold(0, |accum, num_sides| {
-            accum + rng.gen_range(1, num_sides + 1)
-        })
+    dice.fold(0, |accum, die| accum + die.roll(rng))
 }
 
 #[command]
@@ -29,22 +32,22 @@ fn roll_dice(num_sides: &Vec<u32>) -> u32 {
 #[min_args(2)]
 #[max_args(2)]
 pub fn roll(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
-    let num_dice = args.single::<u32>().unwrap();
+    let num_dice = args.single::<usize>().unwrap();
     let num_sides = args.single::<u32>().unwrap();
 
-    let sides = iter::repeat(num_sides).take(num_dice as usize).collect();
-    let result = roll_dice(&sides);
+    let dice = iter::repeat(Die(num_sides)).take(num_dice);
+    let result = roll_dice(dice);
 
     let response = MessageBuilder::new()
         .mention(&msg.author)
-        .push(" Result of running")
-        .push_bold_safe(format!(" {}", msg.content.replace("~roll ", "")))
-        .push(" was")
-        .push_bold_safe(format!(" {}", result))
+        .push(" Result of running ")
+        .push_bold_safe(msg.content.replace("~roll ", ""))
+        .push(" was ")
+        .push_bold_safe(result)
         .build();
 
     if let Err(reason) = msg.channel_id.say(&ctx.http, &response) {
-        error!("Error sending message: {:?}", reason);
+        error!("Error sending response for command `{}`: {:?}", msg.content, reason);
     }
     Ok(())
 }
