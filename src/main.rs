@@ -73,7 +73,10 @@ fn main() {
             .prefix("~"))
         .help(&HELP)
         .unrecognised_command(|ctx, msg, unrecognised_command_name| {
-            let display_text = format!("Message is not a command `{}`", unrecognised_command_name);
+            let display_text = format!(
+                "Sorry, I didn't recognize this command: `{}`. Could you try again?",
+                unrecognised_command_name,
+            );
             if let Err(reason) = msg.channel_id.say(&ctx.http, &display_text) {
                 error!("{}", reason);
             }
