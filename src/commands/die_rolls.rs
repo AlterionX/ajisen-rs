@@ -32,10 +32,10 @@ fn roll_dice<D: iter::Iterator<Item = Die>>(dice: D) -> u32 {
 #[min_args(2)]
 #[max_args(2)]
 pub fn roll(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
-    let num_dice = args.single::<usize>().unwrap();
+    let num_dice = args.single::<u32>().unwrap();
     let num_sides = args.single::<u32>().unwrap();
 
-    let dice = iter::repeat(Die(num_sides)).take(num_dice);
+    let dice = iter::repeat(Die(num_sides)).take(num_dice as usize);
     let result = roll_dice(dice);
 
     let response = MessageBuilder::new()
