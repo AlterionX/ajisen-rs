@@ -87,6 +87,9 @@ impl<'a> PollRequest<'a> {
     }
 }
 
+const REGIONAL_INDICATORS: &'static str = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿";
+const YES_NO_INDICATORS: &'static str = "👍👎";
+
 #[command]
 #[description("Poll")]
 #[usage("
@@ -112,30 +115,33 @@ pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
         .push_line(" has started a poll!")
         .push_bold_line(question.question)
         .push_line("Here are the choices:");
-    let indicators = if let Some(choices) = question.choices {
+    let indicators: Vec<_> = if let Some(choices) = question.choices {
         for (idx, choice) in choices.iter().enumerate() {
             response
-                .push(":regional_indicator_")
+                .push_bold(choice)
+                .push(": :regional_indicator_")
                 .push((b'a' + idx as u8) as char)
-                .push(": :")
-                .push_line(choice);
+                .push_line(":");
         }
         response.push("Please react with your response!");
-        (0..choices.len())
-            .map(|i| ((b'a') + i as u8) as char)
-            .map(|c| format!(":regional_indicator_{}:", c))
+        REGIONAL_INDICATORS
+            .chars()
+            .enumerate()
+            .filter(|(i, _)| *i < choices.len())
+            .map(|(_, c)| c)
             .collect()
     } else {
         response
             .push_bold_safe("Please select yes or no.")
             .build();
-        vec![":+1:".into(), ":-1:".into()]
+        YES_NO_INDICATORS.chars().collect()
     };
     let response = response.build();
 
     let message = msg.channel_id.say(&ctx, &response)?;
-    for indicator in indicators {
-        message.react(&ctx, indicator)?;
+    for indicator in indicators.into_iter() {
+        log::debug!("Attempting to react with {:?} emoji.", indicator);
+        message.react(&ctx, indicator).map_err(|e| { log::debug!("{:?}", e); e })?;
     }
     Ok(())
 }
