@@ -22,12 +22,13 @@ use std::collections::HashSet;
 
 use commands::{
     die_rolls::*,
+    poll::*,
 };
 
 group!({
     name: "general",
     options: {},
-    commands: [roll]
+    commands: [roll, poll]
 });
 
 #[help]
