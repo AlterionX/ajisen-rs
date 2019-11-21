@@ -115,13 +115,13 @@ pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
         .push_line(" has started a poll!")
         .push_bold_line(question.question)
         .push_line("Here are the choices:");
-    let indicators: Vec<_> = if let Some(choices) = question.choices {
+    let indicators: String = if let Some(choices) = question.choices {
         for (idx, choice) in choices.iter().enumerate() {
             response
-                .push_bold(choice)
-                .push(": :regional_indicator_")
+                .push(":regional_indicator_")
                 .push((b'a' + idx as u8) as char)
-                .push_line(":");
+                .push(": :")
+                .push_bold_line(choice);
         }
         response.push("Please react with your response!");
         REGIONAL_INDICATORS
@@ -139,9 +139,8 @@ pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
     let response = response.build();
 
     let message = msg.channel_id.say(&ctx, &response)?;
-    for indicator in indicators.into_iter() {
-        log::debug!("Attempting to react with {:?} emoji.", indicator);
-        message.react(&ctx, indicator).map_err(|e| { log::debug!("{:?}", e); e })?;
+    for indicator in indicators.chars() {
+        message.react(&ctx, indicator)?;
     }
     Ok(())
 }
