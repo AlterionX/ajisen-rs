@@ -17,7 +17,6 @@ struct PollRequest<'a> {
 impl<'a> PollRequest<'a> {
     const STR_PATTERN: &'static str = r#"^(?s:(?:"(?P<text>(?:[^\\"]|(?:\\.))*)")\s*)"#;
     const POLL_HEAD: &'static str = r"^(?s:\s*~poll\s*)";
-    const OPTS_HEAD: &'static str = r"^(?s:\s*(?i:opt(?:ion)?s)\s*)";
 
     fn without_head(msg: &'a str) -> Option<&'a str> {
         let poll_head_regex = Regex::new(Self::POLL_HEAD).unwrap();
@@ -26,32 +25,7 @@ impl<'a> PollRequest<'a> {
             .map(|matched| &msg[matched.end()..])
     }
 
-    fn extract_question(msg: &'a str) -> Option<(&'a str, &'a str)> {
-        let str_regex = Regex::new(Self::STR_PATTERN).unwrap();
-        str_regex
-            .captures(msg)
-            .and_then(|capture| {
-                if let (Some(full), Some(text)) = (capture.get(0), capture.name("text")) {
-                    Some((full, text))
-                } else {
-                    None
-                }
-            })
-            .map(|(full, text)| (
-                    &msg[text.start()..text.end()],
-                    &msg[full.end()..],
-            ))
-    }
-
-    fn without_choices_head_or_none(msg: &'a str) -> Option<&'a str> {
-        let opts_head_regex = Regex::new(Self::OPTS_HEAD).unwrap();
-
-        opts_head_regex
-            .find(msg)
-            .map(|matched| &msg[matched.end()..])
-    }
-
-    fn extract_choices(msg: &'a str) -> Option<(Vec<&'a str>, &'a str)> {
+    fn args(msg: &'a str) -> Option<(Vec<&'a str>, &'a str)> {
         let str_regex = Regex::new(Self::STR_PATTERN).unwrap();
         let mut remaining = msg;
         let matches_plus_one_remaining = std::iter::from_fn(|| {
@@ -69,17 +43,23 @@ impl<'a> PollRequest<'a> {
 
     fn extract(msg: &'a str) -> Option<Self> {
         let remaining = Self::without_head(msg)?;
-        let (question, remaining) = Self::extract_question(remaining)?;
-        let (choices, remaining) = if let Some(remaining) = Self::without_choices_head_or_none(remaining) {
-            let (choices, remaining) = Self::extract_choices(remaining)?;
-            (Some(choices), remaining)
+        let (mut args, remaining) = if let Some((args, remaining)) = Self::args(remaining) {
+            (args, remaining)
         } else {
-            (None, remaining)
+            (vec![], remaining)
         };
-        if remaining.len() == 0 {
+        if args.len() < 1 {
+            None
+        } else if remaining.len() == 0 {
+            let question = args[0];
+            args.remove(0);
             Some(Self {
                 question,
-                choices,
+                choices: if args.len() > 1 {
+                    Some(args)
+                } else {
+                    None
+                },
             })
         } else {
             None
@@ -96,15 +76,15 @@ const YES_NO_INDICATORS: &'static str = "👍👎";
     Enter your question in quotes with escape characters if need be. Follow this with options, also with
     escape characters. A more technical example is show here:
 
-    `~poll \"Question\" [opt[ion]s (\"An option\")+]`
+    `~poll \"Question\" (\"An option\")+]`
 
     If no options are provided, the question is assumed to be a yes or no question.
 ")]
 #[example("~poll \"How's the weather today?\" \"Good.\" \"Ok\" \"Bad\"")]
 #[help_available]
 pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let question = PollRequest::extract(msg.content.as_str()).ok_or("Cannot parse message as a poll request!")?;
-    if question.choices.as_ref().map_or(0, |v| v.len()) > 26 {
+    let command = PollRequest::extract(msg.content.as_str()).ok_or("Cannot parse message as a poll request!")?;
+    if command.choices.as_ref().map_or(0, |v| v.len()) > 26 {
         Err("We only support polls with up to 26 choices! Sorry.".to_string())?;
     }
 
@@ -113,9 +93,9 @@ pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
         .push("@here, ")
         .mention(&msg.author)
         .push_line(" has started a poll!")
-        .push_bold_line(question.question)
+        .push_bold_line(command.question)
         .push_line("Here are the choices:");
-    let indicators: String = if let Some(choices) = question.choices {
+    let indicators: String = if let Some(choices) = command.choices {
         for (idx, choice) in choices.iter().enumerate() {
             response
                 .push(":regional_indicator_")
@@ -171,26 +151,8 @@ mod test {
     }
 
     #[test]
-    fn options() {
-        const SAMPLE: &'static str = "~poll \"Hello\" options";
-        assert_eq!(PollRequest::extract(SAMPLE), Some(PollRequest {
-            question: "Hello",
-            choices: Some(vec![])
-        }));
-    }
-
-    #[test]
-    fn opts() {
-        const SAMPLE: &'static str = "~poll \"Hello\" opts";
-        assert_eq!(PollRequest::extract(SAMPLE), Some(PollRequest {
-            question: "Hello",
-            choices: Some(vec![])
-        }));
-    }
-
-    #[test]
     fn actual_options() {
-        const SAMPLE: &'static str = "~poll \"Hello\" opts \"Data\" \"More \\\" Data\"";
+        const SAMPLE: &'static str = "~poll \"Hello\" \"Data\" \"More \\\" Data\"";
         assert_eq!(PollRequest::extract(SAMPLE), Some(PollRequest {
             question: "Hello",
             choices: Some(vec!["Data", "More \\\" Data"])
