@@ -24,8 +24,10 @@ fn roll_dice<D: iter::Iterator<Item = Die>>(dice: D) -> u32 {
 }
 
 #[command]
-#[description("Roll one or more dice.")]
-#[usage("NdM, where N is number of dice and M is number of sides in each dice.")]
+#[description("
+**Roll**
+`~roll NdM`, where `N` is number of dice and `M` is number of sides in each dice.
+")]
 #[example("1d6")]
 #[help_available]
 #[delimiters("d")]

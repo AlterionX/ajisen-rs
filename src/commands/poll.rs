@@ -71,16 +71,12 @@ const REGIONAL_INDICATORS: &'static str = "🇦🇧🇨🇩🇪🇫🇬🇭🇮�
 const YES_NO_INDICATORS: &'static str = "👍👎";
 
 #[command]
-#[description("Poll")]
-#[usage("
-    Enter your question in quotes with escape characters if need be. Follow this with options, also with
-    escape characters. A more technical example is show here:
-
-    `~poll \"Question\" (\"An option\")+]`
-
-    If no options are provided, the question is assumed to be a yes or no question.
+#[description("
+**Poll**
+Start a poll where users can vote for various options with reactions.
+If no options are provided, the question is assumed to be a yes or no question.
 ")]
-#[example("~poll \"How's the weather today?\" \"Good.\" \"Ok\" \"Bad\"")]
+#[example("\"Boba tonight?\" \"Sure\" \"Nah\"")]
 #[help_available]
 pub fn poll(ctx: &mut Context, msg: &Message) -> CommandResult {
     let command = PollRequest::extract(msg.content.as_str()).ok_or("Cannot parse message as a poll request!")?;
