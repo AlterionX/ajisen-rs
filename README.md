@@ -1,3 +1,5 @@
+![Tests and Build](https://github.com/yoloVoe/ajisen-rs/workflows/Run%20Tests%20and%20Publish/badge.svg)
+
 # Ajisen
 Ajisen is a general-purpose Discord bot.
 
