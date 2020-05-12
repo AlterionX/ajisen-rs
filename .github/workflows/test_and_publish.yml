@@ -1,0 +1,33 @@
+name: Run Tests and Publish
+on: [push, pull_request]
+
+jobs:
+    run_tests:
+        name: Run Cargo Tests
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out the repo
+                uses: actions/checkout@v2
+            -   name: Install Rust Toolchain
+                uses: actions-rs/toolchain@v1
+                with:
+                  toolchain: stable
+            -   uses: actions-rs/cargo@v1
+                with:
+                    command: test
+    push_to_registry:
+        needs: run_tests
+        name: Push Image to GitHub Packages
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out the repo
+                uses: actions/checkout@v2
+            -   name: Push to GitHub Packages
+                uses: docker/build-push-action@v1
+                with:
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+                    registry: docker.pkg.github.com
+                    repository: yolovoe/ajisen-rs/ajisen
+                    tag_with_ref: true
+                    cache_froms: yolovoe/ajisen-rs/ajisen:latest
