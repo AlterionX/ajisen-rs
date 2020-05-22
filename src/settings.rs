@@ -1,4 +1,4 @@
-use config::{Config, ConfigError, File};
+use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -21,6 +21,6 @@ pub struct Settings {
 pub fn read() -> Result<Settings, ConfigError> {
     let mut s = Config::new();
     s.merge(File::with_name("config/default").required(false))?;
-    s.merge(File::with_name("production").required(false))?;
+    s.merge(Environment::with_prefix("ajisen"))?;
     s.try_into()
 }

@@ -1,0 +1,17 @@
+name: Run Tests
+on: [push, pull_request]
+
+jobs:
+    run_tests:
+        name: Run Cargo Tests
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out the repo
+                uses: actions/checkout@v2
+            -   name: Install Rust Toolchain
+                uses: actions-rs/toolchain@v1
+                with:
+                  toolchain: stable
+            -   uses: actions-rs/cargo@v1
+                with:
+                    command: test
