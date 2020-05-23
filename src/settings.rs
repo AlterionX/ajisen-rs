@@ -9,7 +9,6 @@ pub struct Discord {
 #[derive(Debug, Deserialize)]
 pub struct Logging {
     pub level: String,
-    pub file: String,
 }
 
 #[derive(Debug, Deserialize)]

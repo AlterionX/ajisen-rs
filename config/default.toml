@@ -3,4 +3,3 @@ token = "YOUR_DISCORD_BOT_TOKEN"
 
 [logging]
 level = "debug"
-file = "site.out"

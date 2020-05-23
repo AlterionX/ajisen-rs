@@ -37,7 +37,6 @@ pub fn setup(logging: &settings::Logging) -> Result<(), fern::InitError> {
         .level_for("reqwest", log::LevelFilter::Info)
         .level_for("tungstenite", log::LevelFilter::Info)
         .chain(std::io::stdout())
-        .chain(fern::log_file(&logging.file)?)
         .apply()?;
 
     Ok(())
