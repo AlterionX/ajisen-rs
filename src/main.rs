@@ -74,8 +74,13 @@ fn main() {
             .prefix("~"))
         .help(&HELP)
         .unrecognised_command(|ctx, msg, unrecognised_command_name| {
+            if msg.content.trim_start().starts_with("~~") {
+                info!("Ignoring possible strikethrough");
+                return
+            }
+
             let display_text = format!(
-                "Sorry, I didn't recognize this command: `{}`. Could you try again?",
+                "Sorry, I didn't recognize this command: `{}`. Type `~help [cmd_name]` to learn more.",
                 unrecognised_command_name,
             );
             if let Err(reason) = msg.channel_id.say(&ctx.http, &display_text) {

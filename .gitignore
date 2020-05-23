@@ -2,3 +2,6 @@
 **/*.rs.bk
 production.toml
 *.out
+runner.ps1
+turnoff.ps1
+cleanup.ps1
